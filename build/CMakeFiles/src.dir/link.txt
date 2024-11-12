@@ -1,0 +1,1 @@
+/usr/bin/g++ -fPIC  -std=c++11 -O0 -ggdb -Wall -Werror -rdynamic -fPIC -Wno-unused-function -Wno-builtin-macro-redefined -Wno-deprecated -Wno-deprecated-declarations -g -shared -Wl,-soname,libsrc.so -o ../lib/libsrc.so CMakeFiles/src.dir/src/log.cc.o CMakeFiles/src.dir/src/singleton.cc.o CMakeFiles/src.dir/src/util.cc.o 

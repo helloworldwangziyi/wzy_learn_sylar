@@ -1,0 +1,26 @@
+2024-11-12 21:21:33 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	
+2024-11-12 21:21:33 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	
+2024-11-12 21:21:33 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	
+2024-11-12 21:21:33 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	
+2024-11-12 22:00:07 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	hello sylar logwangziyi 1
+2024-11-12 22:00:07 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	hello sylar logwangziyi 1
+2024-11-12 22:00:07 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	hello sylar logwangziyi 1
+2024-11-12 22:01:58 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	hello sylar logwangziyi 1
+2024-11-12 22:01:58 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	hello sylar logwangziyi 1
+2024-11-12 22:01:58 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	hello sylar logwangziyi 1
+2024-11-12 22:08:39 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	hello sylar logwangziyi 1
+2024-11-12 22:08:39 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	hello sylar logwangziyi 1
+2024-11-12 22:08:39 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	hello sylar logwangziyi 1
+2024-11-12 22:08:39 [-1731420091531964ms]	635174	test_log	0	[INFO]	test	/home/wangziyi/PROJECT/sylar/wzy_sylar_server/test/test_log.cc:44	test macro
+2024-11-12 22:14:42 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	hello sylar logwangziyi 1
+2024-11-12 22:14:42 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	hello sylar logwangziyi 1
+2024-11-12 22:14:42 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	hello sylar logwangziyi 1
+2024-11-12 22:14:42 [-1730992404258ms]	636063	test_log	0	[INFO]	test	/home/wangziyi/PROJECT/sylar/wzy_sylar_server/test/test_log.cc:44	test macro
+2024-11-12 22:18:59 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	hello sylar logwangziyi 1
+2024-11-12 22:18:59 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	hello sylar logwangziyi 1
+2024-11-12 22:18:59 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	hello sylar logwangziyi 1
+2024-11-12 22:18:59 [-1730992404258ms]	636792	test_log	0	[INFO]	test	/home/wangziyi/PROJECT/sylar/wzy_sylar_server/test/test_log.cc:44	test macro
+2024-11-12 22:24:41 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	hello sylar logwangziyi 1
+2024-11-12 22:24:41 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	hello sylar logwangziyi 1
+2024-11-12 22:24:41 [0ms]	1	main	2	[DEBUG]	test	test.cc:100	hello sylar logwangziyi 1
+2024-11-12 22:24:41 [0ms]	637315	test_log	0	[INFO]	test	/home/wangziyi/PROJECT/sylar/wzy_sylar_server/test/test_log.cc:44	test macro
