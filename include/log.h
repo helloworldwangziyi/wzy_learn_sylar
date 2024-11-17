@@ -6,7 +6,7 @@
  * @date 2024-11-06
  * @author helloworldwangziyi copy sylar
  */
-// 这个注释用于学习，合并某个单独的提交
+
 #pragma once
 
 #ifndef __SYLAR_LOG_H__
