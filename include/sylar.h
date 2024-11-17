@@ -6,4 +6,5 @@
 #include "singleton.h"
 #include "mutex.h"
 #include "noncopyable.h"
+#include "env.h"
 #endif

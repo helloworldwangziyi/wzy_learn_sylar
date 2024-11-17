@@ -24,10 +24,17 @@ set(LIB_SRC
     src/log.cc
     src/singleton.cc
     src/util.cc
+    src/env.cc
     )
 add_library(src SHARED ${LIB_SRC})
 force_redefine_file_macro_for_sources(src)
 option(BUILD_TEST "ON for build test" OFF)
+
+
+find_package(Boost REQUIRED) 
+if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+endif()
 
 set(LIBS
     src
@@ -37,6 +44,7 @@ set(LIBS
 
 if(BUILD_TEST)
 sylar_add_executable(test_log "test/test_log.cc" src "${LIBS}")
+sylar_add_executable(test_env "test/test_env.cc" src "${LIBS}")
 endif()
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)

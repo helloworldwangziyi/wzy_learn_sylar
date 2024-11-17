@@ -31,6 +31,16 @@
  */
 #define SYLAR_LOG_ROOT() sylar::LoggerMgr::GetInstance()->getRoot()
 
+/**
+ * @brief 获取指定名称的日志器
+ */
+#define SYLAR_LOG_NAME(name) sylar::LoggerMgr::GetInstance()->getLogger(name)
+
+/**
+ * @brief 获取root日志器
+ */
+#define SYLAR_LOG_ROOT() sylar::LoggerMgr::GetInstance()->getRoot()
+
 #define SYLAR_LOG_LEVEL(logger , level) \
     if(level <= logger->getLevel()) \
         sylar::LogEventWrap(logger, sylar::LogEvent::ptr(new sylar::LogEvent(logger->getName(), \
@@ -230,7 +240,7 @@ public:
      * 
      * 默认格式描述：年-月-日 时:分:秒 [累计运行毫秒数] \\t 线程id \\t 线程名称 \\t 协程id \\t [日志级别] \\t [日志器名称] \\t 文件名:行号 \\t 日志消息 换行符
      */
-    LogFormatter(const std::string &pattern = "%d{%Y-%m-%d %H:%M:%S} [%rms]%T%t%T%N%T%F%T[%p]%T%c%T%f:%l%T%m%n");
+    LogFormatter(const std::string &pattern = "%d{%Y-%m-%d %H:%M:%S} [%rms]%z%t%z%N%z%F%z[%p]%z%c%z%f:%l%z%m%n");
 
     /**
      * @brief 初始化，解析格式模板，提取模板项
