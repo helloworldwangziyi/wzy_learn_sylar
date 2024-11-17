@@ -524,5 +524,48 @@ private:
     LogEvent::ptr m_event;
 };
 
+/**
+ * @brief 日志器管理类
+ */
+class LoggerManager{
+public:
+    typedef Spinlock MutexType;
+    /**
+     * @brief 构造函数
+     */
+    LoggerManager();
+
+    /**
+     * @brief 初始化
+     */
+    void init();
+
+ /**
+     * @brief 获取指定名称的日志器
+     */
+    Logger::ptr getLogger(const std::string &name);
+
+    /**
+     * @brief 获取root日志器，等效于getLogger("root")
+     */
+    Logger::ptr getRoot() { return m_root; }
+
+    /**
+     * @brief 将所有的日志器配置转成YAML String
+     */
+    std::string toYamlString();
+
+private:
+    /// Mutex
+    MutexType m_mutex;
+    /// 日志器集合
+    std::map<std::string, Logger::ptr> m_loggers;
+    /// root日志器
+    Logger::ptr m_root;
+};
+
+/// 日志器管理类单例
+typedef sylar::Singleton<LoggerManager> LoggerMgr;
+
 }
 #endif
