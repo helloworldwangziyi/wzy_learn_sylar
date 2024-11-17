@@ -4,7 +4,7 @@
  * @brief 日志模块
  * @version 0.1
  * @date 2024-11-06
- * @author helloworldwangziyi
+ * @author helloworldwangziyi copy sylar
  */
 
 #pragma once
