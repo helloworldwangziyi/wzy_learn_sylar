@@ -1,1 +1,0 @@
-/usr/bin/g++  -std=c++11 -O0 -ggdb -Wall -Werror -rdynamic -fPIC -Wno-unused-function -Wno-builtin-macro-redefined -Wno-deprecated -Wno-deprecated-declarations -g CMakeFiles/main.dir/src/log.cc.o -o ../bin/main 
