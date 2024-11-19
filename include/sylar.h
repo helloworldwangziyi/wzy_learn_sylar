@@ -7,4 +7,5 @@
 #include "mutex.h"
 #include "noncopyable.h"
 #include "env.h"
+#include "config.h"
 #endif
