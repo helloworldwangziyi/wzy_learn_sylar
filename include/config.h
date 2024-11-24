@@ -441,7 +441,102 @@ private:
     //变更回调函数组, uint64_t key,要求唯一，一般可以用hash
     std::map<uint64_t, on_change_cb> m_cbs;      
 };
+
+
+class Config{
+public:
+    typedef std::unordered_map<std::string, ConfigVarBase::ptr> ConfigVarMap;
+    typedef RWMutex RWMutexType;
+    /**
+     * @brief 获取/创建对应参数名的配置参数
+     * @param[in] name 参数名称
+     * @param[in] default_value 参数的默认值
+     * @param[in] description 参数的描述
+     * @details 获取参数名为name的配置参数,如果存在直接返回
+     *          如果不存在,创建参数配置并用default_value赋值
+     * @return 返回对应的配置参数,如果参数名存在但是类型不匹配则返回nullptr
+     * @exception 如果参数名包含非法字符[^0-9a-z_.] 抛出异常 std::invalid_argument
+     */
+    template <class T>
+    static typename ConfigVar<T>::ptr Lookup(const std::string &name,
+                                             const T &default_value, const std::string &description = "") {
+        
+        RWMutexType::WriteLock lock(GetMutex());
+        auto it = GetDatas().find(name);
+        if(it != GetDatas().end()){
+            auto tmp = std::dynamic_pointer_cast<ConfigVar<T>>(it->second);
+            if(tmp){
+                SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << "Lookup name=" << name << " exists";
+                return tmp;
+            }else{
+                SYLAR_LOG_ERROR(SYLAR_LOG_ROOT()) << "Lookup name=" << name << " exists but type not "
+                    << TypeToName<T>() << " real_type=" << it->second->getTypeName() << " " << it->second->toString();
+                return nullptr;
+            }
+        }
+        if(name.find_first_not_of("abcdefghijklmnopqrstuvwxyz._0123456789") != std::string::npos){
+            SYLAR_LOG_ERROR(SYLAR_LOG_ROOT()) << "Lookup name invalid " << name;
+            throw std::invalid_argument(name);
+        }
+
+        typename ConfigVar<T>::ptr v(new ConfigVar<T>(name, default_value, description));
+        GetDatas()[name] = v;
+        return v;
+    }
+
+    /**
+     * @brief 查找配置参数
+     * @param[in] name 配置参数名称
+     * @return 返回配置参数名为name的配置参数
+     */
+    template <class T>
+    static typename ConfigVar<T>::ptr Lookup(const std::string &name) {
+        RWMutexType::ReadLock lock(GetMutex());
+        auto it = GetDatas().find(name);
+        if (it == GetDatas().end()) {
+            return nullptr;
+        }
+        return std::dynamic_pointer_cast<ConfigVar<T> >(it->second);
+    }
+
+        /**
+     * @brief 使用YAML::Node初始化配置模块
+     */
+    static void LoadFromYaml(const YAML::Node &root);
+
+    /**
+     * @brief 加载path文件夹里面的配置文件
+     */
+    static void LoadFromConfDir(const std::string &path, bool force = false);
+
+    /**
+     * @brief 查找配置参数,返回配置参数的基类
+     * @param[in] name 配置参数名称
+     */
+    static ConfigVarBase::ptr LookupBase(const std::string &name);
+
+    /**
+     * @brief 遍历配置模块里面所有配置项
+     * @param[in] cb 配置项回调函数
+     */
+    static void Visit(std::function<void(ConfigVarBase::ptr)> cb);
+private:
+    /**
+     * @brief 返回所有的配置项
+     */
+    static ConfigVarMap &GetDatas() {
+        static ConfigVarMap s_datas;
+        return s_datas;
+    }
+
+    /**
+     * @brief 配置项的RWMutex
+     */
+    static RWMutexType &GetMutex() {
+        static RWMutexType s_mutex;
+        return s_mutex;
+    }
+};
+
 }
-
-
 #endif
