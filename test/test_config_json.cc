@@ -1,6 +1,8 @@
 #include "config_json.h"
 #include "log.h"
 
+
+
 // sylar::Logger::ptr g_logger = SYLAR_LOG_ROOT();
 
 void test_config_json()

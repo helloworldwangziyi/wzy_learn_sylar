@@ -30,7 +30,8 @@ add_library(src SHARED ${LIB_SRC})
 force_redefine_file_macro_for_sources(src)
 option(BUILD_TEST "ON for build test" OFF)
 
-
+# 查找 OpenCV
+# find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED) 
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})

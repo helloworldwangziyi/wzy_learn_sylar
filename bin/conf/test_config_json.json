@@ -1,0 +1,6 @@
+{
+    "test": {
+        "test_int": 10,
+        "test_float": 10.1
+    }
+}
