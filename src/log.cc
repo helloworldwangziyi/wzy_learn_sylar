@@ -1,5 +1,7 @@
 #include "log.h"
 #include "config.h"
+#include "config_json.h"
+#include "env.h"
 #include <utility> // for std::pair
 #include <functional>
 #include <fstream>
@@ -805,16 +807,16 @@ namespace sylar
         bool operator<(const LogDefine &oth) const {
             return name < oth.name;
         }
-
         bool isValid() const {
             return !name.empty();
         }
-
-    
     };
 
-    template<>
-    class LexicalCast<std::string, LogDefine>{
+
+
+    template <>
+    class LexicalCast<std::string, LogDefine>
+    {
     public:
         LogDefine operator()(const std::string &v) {
             YAML::Node n = YAML::Load(v);
@@ -862,6 +864,64 @@ namespace sylar
     };
 
     template<>
+    class LexicalCastJson<std::string, LogDefine> {
+    public:
+        LogDefine operator()(const std::string &v) {
+            nlohmann::json j = nlohmann::json::parse(v);
+            LogDefine ld;
+            ld.name = j["name"].get<std::string>();
+            ld.level = LogLevel::FromString(j["level"].get<std::string>());
+
+            if (j.contains("appenders")) {
+                for (const auto& appender : j["appenders"]) {
+                    LogAppenderDefine lad;
+                    std::string type = appender["type"].get<std::string>();
+                    if (type == "FileLogAppender") {
+                        lad.type = 1;
+                        lad.file = appender["file"].get<std::string>();
+                        if (appender.contains("pattern")) {
+                            lad.pattern = appender["pattern"].get<std::string>();
+                        }
+                    } else if (type == "StdoutLogAppender") {
+                        lad.type = 2;
+                        if (appender.contains("pattern")) {
+                            lad.pattern = appender["pattern"].get<std::string>();
+                        }
+                    }
+                    ld.appenders.push_back(lad);
+                }
+            }
+            return ld;
+        }
+    };
+
+    template<>
+    class LexicalCastJson<LogDefine, std::string> {
+    public:
+        std::string operator()(const LogDefine &i) {
+            nlohmann::json j;
+            j["name"] = i.name;
+            j["level"] = LogLevel::ToString(i.level);
+            nlohmann::json appenders_json = nlohmann::json::array();
+            for (const auto& appender : i.appenders) {
+                nlohmann::json appender_json;
+                if (appender.type == 1) {
+                    appender_json["type"] = "FileLogAppender";
+                    appender_json["file"] = appender.file;
+                } else if (appender.type == 2) {
+                    appender_json["type"] = "StdoutLogAppender";
+                }
+                if (!appender.pattern.empty()) {
+                    appender_json["pattern"] = appender.pattern;
+                }
+                appenders_json.push_back(appender_json);
+            }
+            j["appenders"] = appenders_json;
+            return j.dump();
+        }
+    };
+
+    template<>
     class LexicalCast<LogDefine, std::string> {
     public:
         std::string operator()(const LogDefine &i) {
@@ -890,7 +950,11 @@ namespace sylar
     sylar::ConfigVar<std::set<LogDefine>>::ptr g_log_defines = 
         sylar::Config::Lookup("logs", std::set<LogDefine>(), "logs config");
 
+    sylar::ConfigVarJson<std::set<LogDefine>>::ptr g_log_defines_json = 
+        sylar::ConfigJson::Lookup("logs_json", std::set<LogDefine>(), "logs config");
+
     struct LogIniter {
+    public:
         LogIniter() {
             g_log_defines->addListener([](const std::set<LogDefine> &old_value, const std::set<LogDefine> &new_value){
                 SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << "on log config changed";
@@ -916,11 +980,11 @@ namespace sylar
                             ap.reset(new FileLogAppender(a.file));
                         } else if(a.type == 2) {
                             // 如果以daemon方式运行，则不需要创建终端appender
-                            // if(!sylar::EnvMgr::GetInstance()->has("d")) {
-                            //     ap.reset(new StdoutLogAppender);
-                            // } else {
-                            //     continue;
-                            // }
+                            if(!sylar::EnvMgr::GetInstance()->has("d")) {
+                                ap.reset(new StdoutLogAppender);
+                            } else {
+                                continue;
+                            }
                         }
                         if(!a.pattern.empty()) {
                             ap->setFormatter(LogFormatter::ptr(new LogFormatter(a.pattern)));
@@ -947,4 +1011,78 @@ namespace sylar
     //在main函数之前注册配置更改的回调函数
     //用于在更新配置时将log相关的配置加载到Config
     static LogIniter __log_init;
+
+    struct LogIniterJson {
+    public:
+        LogIniterJson() {
+            g_log_defines_json->addListener([](const std::set<LogDefine>& old_value,
+                                            const std::set<LogDefine>& new_value) {
+                SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << "on json log config changed";
+                
+                // 处理新增和修改的logger
+                for(auto& i : new_value) {
+                    auto it = old_value.find(i);
+                    sylar::Logger::ptr logger;
+                    
+                    if(it == old_value.end()) {
+                        // 新增的logger
+                        logger = SYLAR_LOG_NAME(i.name);
+                        SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << "new logger: " << i.name;
+                    } else {
+                        if(!(i == *it)) {
+                            // 修改的logger
+                            logger = SYLAR_LOG_NAME(i.name);
+                            SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << "modified logger: " << i.name;
+                        } else {
+                            continue;
+                        }
+                    }
+
+                    // 配置logger
+                    logger->setLevel(i.level);
+                    logger->clearAppenders();
+
+                    // 配置appender
+                    for(auto& a : i.appenders) {
+                        sylar::LogAppender::ptr ap;
+                        if(a.type == 1) {  // FileLogAppender
+                            ap.reset(new FileLogAppender(a.file));
+                            SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << "add file appender: " << a.file;
+                        } else if(a.type == 2) {  // StdoutLogAppender
+                            if(!sylar::EnvMgr::GetInstance()->has("d")) {
+                                ap.reset(new StdoutLogAppender);
+                                SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << "add stdout appender";
+                            } else {
+                                continue;
+                            }
+                        }
+
+                        // 设置日志格式
+                        if(!a.pattern.empty()) {
+                            ap->setFormatter(LogFormatter::ptr(new LogFormatter(a.pattern)));
+                        } else {
+                            ap->setFormatter(LogFormatter::ptr(new LogFormatter));
+                        }
+                        
+                        logger->addAppender(ap);
+                    }
+                }
+
+                // 处理删除的logger
+                for(auto& i : old_value) {
+                    auto it = new_value.find(i);
+                    if(it == new_value.end()) {
+                        // 删除的logger，设置为无效
+                        auto logger = SYLAR_LOG_NAME(i.name);
+                        logger->setLevel(LogLevel::NOTSET);
+                        logger->clearAppenders();
+                        SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << "delete logger: " << i.name;
+                    }
+                }
+            });
+        }
+    };
+
+    // 在main函数之前注册JSON配置更改的回调函数
+    static LogIniterJson __log_init_json;
 }

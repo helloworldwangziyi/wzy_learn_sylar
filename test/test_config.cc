@@ -113,6 +113,18 @@ void test_class() {
 
     SYLAR_LOG_INFO(g_logger) << g_person->getValue().toString();
 
+    // 创建map
+    std::map<std::string, Person> persons;
+    persons["p1"] = Person();
+    persons["p1"].m_name = "p1";
+    persons["p1"].m_age = 10;
+    
+    persons["p2"] = Person();
+    persons["p2"].m_name = "p2";
+    persons["p2"].m_age = 20;
+
+    g_person_map->setValue(persons);
+
     for (const auto &i : g_person_map->getValue()) {
         SYLAR_LOG_INFO(g_logger) << i.first << ":" << i.second.toString();
     }
