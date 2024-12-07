@@ -8,6 +8,7 @@
 #include "sylar.h"
 
 sylar::Logger::ptr g_logger = SYLAR_LOG_ROOT();
+sylar::Logger::ptr g_logger_system = SYLAR_LOG_NAME("system");
 
 sylar::ConfigVar<int>::ptr g_int = 
     sylar::Config::Lookup("global.int", (int)8080, "global int");
@@ -176,30 +177,84 @@ void test_config() {
     test_class();
 }
 
+void ListAllMember(const std::string &prefix,
+                        const YAML::Node &node,
+                        std::list<std::pair<std::string, const YAML::Node>> &output)
+{
+    if(prefix.find_first_not_of("abcdefghikjlmnopqrstuvwxyz._0123456789") != std::string::npos)
+    {
+        SYLAR_LOG_ERROR(g_logger) << "Config invalid name: " << prefix << " : " << node;
+        return;
+    }
+    output.push_back(std::make_pair(prefix, node));
+    if(node.IsMap())
+    {
+        for(auto it = node.begin(); it != node.end(); ++it)
+        {
+            ListAllMember(prefix.empty() ? it->first.Scalar() : prefix + "." + it->first.Scalar(), it->second, output);
+        }
+    }
+}
+
+void LoadFromYaml(const YAML::Node &root)
+{
+    std::list<std::pair<std::string, const YAML::Node>> all_nodes;
+    ListAllMember("", root, all_nodes);
+
+    for(auto &i : all_nodes)
+    {
+        std::string key = i.first;
+        if(key.empty())
+        {
+            continue;
+        }
+        std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+        sylar::ConfigVarBase::ptr var = sylar::Config::LookupBase(key);
+
+        if (var) {
+            if (i.second.IsScalar()) {
+                var->fromString(i.second.Scalar());
+            } else {
+                std::stringstream ss;
+                ss << i.second;
+                var->fromString(ss.str());
+            }
+        }
+    }
+}
+
 int main(int argc, char *argv[]) {
-    // 设置g_int的配置变更回调函数
-    g_int->addListener([](const int &old_value, const int &new_value) {
-        SYLAR_LOG_INFO(g_logger) << "g_int value changed, old_value: " << old_value << ", new_value: " << new_value;
-    });
+    // // 设置g_int的配置变更回调函数
+    // g_int->addListener([](const int &old_value, const int &new_value) {
+    //     SYLAR_LOG_INFO(g_logger) << "g_int value changed, old_value: " << old_value << ", new_value: " << new_value;
+    // });
 
-    SYLAR_LOG_INFO(g_logger) << "before============================";
+    // SYLAR_LOG_INFO(g_logger) << "before============================";
 
-    test_config();
+    // test_config();
 
-    // 从配置文件中加载配置，由于更新了配置，会触发配置项的配置变更回调函数
-    sylar::EnvMgr::GetInstance()->init(argc, argv);
-    sylar::Config::LoadFromConfDir("conf");
-    SYLAR_LOG_INFO(g_logger) << "after============================";
+    // // 从配置文件中加载配置，由于更新了配置，会触发配置项的配置变更回调函数
+    // sylar::EnvMgr::GetInstance()->init(argc, argv);
+    // sylar::Config::LoadFromConfDir("conf");
+    // SYLAR_LOG_INFO(g_logger) << "after============================";
     
-    test_config();
+    // test_config();
 
-    // 遍历所有配置
-    sylar::Config::Visit([](sylar::ConfigVarBase::ptr var){
-        SYLAR_LOG_INFO(g_logger) << "name=" << var->getName()
-            << " description=" << var->getDescription()
-            << " typename=" << var->getTypeName()
-            << " value=" << var->toString();
-    });
+    // // 遍历所有配置
+    // sylar::Config::Visit([](sylar::ConfigVarBase::ptr var){
+    //     SYLAR_LOG_INFO(g_logger) << "name=" << var->getName()
+    //         << " description=" << var->getDescription()
+    //         << " typename=" << var->getTypeName()
+    //         << " value=" << var->toString();
+    // });
+
+    // SYLAR_LOG_INFO(g_logger_system) << "================================================";
+    YAML::Node root = YAML::LoadFile("conf/log.yml");
+    std::list<std::pair<std::string, const YAML::Node>> all_nodes;
+    ListAllMember("", root, all_nodes);
+    for(auto &i : all_nodes) {
+       std::cout << i.first << " : " << i.second << std::endl;
+    }
 
     return 0;
 }

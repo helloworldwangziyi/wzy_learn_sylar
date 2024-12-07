@@ -1,6 +1,15 @@
 #include "config_json.h"
 #include "log.h"
+#include <fstream>
+#include <nlohmann/json.hpp>
 
+nlohmann::json load_json_from_file(const std::string& filepath) {
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open file: " + filepath);
+    }
+    return nlohmann::json::parse(file);
+}
 
 
 // sylar::Logger::ptr g_logger = SYLAR_LOG_ROOT();
@@ -152,6 +161,49 @@ void test_class() {
         }
     }
 }
+
+void ListAllMemberJson(const std::string &prefix, const nlohmann::json &node, std::list<std::pair<std::string, const nlohmann::json&>> &output) {
+    if (node.is_object()) {
+        for (auto it = node.begin(); it != node.end(); ++it) {
+            std::string new_prefix = prefix.empty() ? it.key() : prefix + "." + it.key();
+            ListAllMemberJson(new_prefix, it.value(), output);
+        }
+    } else if (node.is_array()) {
+        for (size_t i = 0; i < node.size(); ++i) {
+            ListAllMemberJson(prefix + "[" + std::to_string(i) + "]", node[i], output);
+        }
+    } else {
+        output.push_back(std::make_pair(prefix, node));
+    }
+}
+struct KeyValuePair {
+    std::string key;
+    nlohmann::json value;
+};
+
+void collectKeyValuePairs(const nlohmann::json& obj, const std::string& prefix, std::vector<KeyValuePair>& pairs) {
+    if (obj.is_object()) {
+        for (auto it = obj.begin(); it != obj.end(); ++it) {
+            std::string current_key = prefix.empty() ? it.key() : prefix + "." + it.key();
+            if (it->is_structured()) {
+                // 如果是结构化数据，继续递归
+                collectKeyValuePairs(*it, current_key, pairs);
+            } else {
+                // 如果是基本数据类型，保存 key-value 对
+                pairs.push_back({current_key, *it});
+            }
+        }
+    } else if (obj.is_array()) {
+        for (size_t i = 0; i < obj.size(); ++i) {
+            collectKeyValuePairs(obj[i], prefix + "[" + std::to_string(i) + "]", pairs);
+        }
+    } else {
+        // 如果是基本数据类型，保存 key-value 对
+        pairs.push_back({prefix, obj});
+    }
+}
+
+
 int main(int argc, char **argv)
 {
     // sylar::ConfigVarJson<int>::ptr g_int = sylar::ConfigJson::Lookup("test.test_int", 30);
@@ -175,12 +227,34 @@ int main(int argc, char **argv)
     // });
 
     // g_vec_int->setValue(std::vector<int>{4, 5, 6});
-    sylar::ConfigJson::LoadFromConfigJsonDir("conf");
-    sylar::ConfigJson::Visit([](sylar::ConfigVarBaseJson::ptr var){
-        std::cout << var->getName() << " = " << var->toString() << std::endl;
-    });
+    // sylar::EnvMgr::GetInstance()->init(argc, argv);
+    // sylar::ConfigJson::LoadFromConfigJsonDir("conf");
+    // sylar::ConfigJson::Visit([](sylar::ConfigVarBaseJson::ptr var){
+    //     std::cout << var->getName() << " = " << var->toString() << std::endl;
+    // });
 
     // test_class();
+
+    nlohmann::json j = load_json_from_file("conf/log.json");
+    // // std::cout << j << std::endl;
+    
+    std::vector<KeyValuePair> output;
+
+    collectKeyValuePairs(j, "", output);
+    for(const auto &i : output) {
+        std::cout << i.key << " : " << i.value << std::endl;
+    }
+    // SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << "================================================";
+    // SYLAR_LOG_INFO(SYLAR_LOG_NAME("system")) << "================================================"; 
+
+    // test_config_json();
+
+    // std::cout << "output size: " << output.size() << std::endl;
+
+
+
+
+
 
     return 0;
 }
